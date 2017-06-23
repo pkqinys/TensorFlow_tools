@@ -23,7 +23,7 @@ def input_fn(xs, ys):
     return feature_cols, labels
 
 
-def DNNReg(xs_train_file, xs_test_file, ys_train_file, ys_test_file):
+def DNNReg(xs_train_file, xs_test_file, ys_train_file, ys_test_file, logging=True):
     # DNNRegressor
     feature_cols = [tf.contrib.layers.real_valued_column(k)
                     for k in FEATURES]
@@ -34,11 +34,12 @@ def DNNReg(xs_train_file, xs_test_file, ys_train_file, ys_test_file):
                   steps=30000)
     y_r = regressor.predict(input_fn=lambda: input_fn(pd.read_csv(xs_test_file), pd.read_csv(ys_test_file)))
     predictions = list(itertools.islice(y_r, 25))
-    print("Predictions: {}".format(str(predictions)))
+    if logging:
+        print("Predictions: {}".format(str(predictions)))
     return y_r
 
 
-def DNNClaf(xs_train_mt, xs_test_mt, ys_train_mt, ys_test_mt):
+def DNNClaf(xs_train_mt, xs_test_mt, ys_train_mt, ys_test_mt, logging=True):
     # DNNClassifier
     monitor = tf.contrib.learn.monitors.ValidationMonitor(np.array(xs_test), np.array(ys_test), every_n_steps=50)
     feature_columns = [tf.contrib.layers.real_valued_column("", dimension=4)]
@@ -48,5 +49,18 @@ def DNNClaf(xs_train_mt, xs_test_mt, ys_train_mt, ys_test_mt):
                                                 model_dir="/Users/apple/Desktop/Waveform/experiment6*8/logs/DNNc")
     classifier.fit(x=np.array(xs_train), y=np.array(ys_train), steps=30000)
     y_c = list(classifier.predict(np.array(xs_test), as_iterable=True))
-    print('Predictions: {}'.format(str(y_c)))
+    if logging:
+        print('Predictions: {}'.format(str(y_c)))
     return y_c
+
+
+def train_and_test():
+    xs_train_file, xs_test_file, ys_train_file, ys_test_file = 'xs_train_table.csv', 'xs_test_table.csv', 'ys_train_table.csv', 'ys_test_table.csv' 
+    xs_train = pd.read_csv(xs_train_file).values.tolist()
+    xs_test = pd.read_csv(xs_test_file).values.tolist()
+    ys_train = pd.read_csv(ys_train_file)['Concentration'].values.tolist()
+    ys_test = pd.read_csv(ys_test_file)['Concentration'].values.tolist()
+    
+    print(DNNClaf(xs_train, xs_test, ys_train, ys_test, logging=False))
+    print(DNNReg(xs_train_file, xs_test_file, ys_train_file, ys_test_file, logging=False))
+    
